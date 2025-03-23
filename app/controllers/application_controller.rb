@@ -33,6 +33,6 @@ class ApplicationController < ActionController::API
   end
 
   def render_unprocessable(exception)
-    render json: {errors: exception.message}, status: :unprocessable_entity
+    render json: {errors: exception.message}, status: :unprocessable_content
   end
 end

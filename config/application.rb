@@ -18,7 +18,7 @@ Bundler.require(*Rails.groups)
 
 module TranslatorApi
   class Application < Rails::Application
-    config.load_defaults 7.0
+    config.load_defaults 8.1
 
     # Loads a smaller middleware stack suitable for API-only apps: no session,
     # flash, cookies or view rendering.

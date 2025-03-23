@@ -53,7 +53,7 @@ RSpec.describe "Translations", type: :request do
       before { post "/translations", params: invalid_attributes }
 
       it "returns a 422 response" do
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
 
       it "returns a JSON response with errors" do
@@ -70,7 +70,7 @@ RSpec.describe "Translations", type: :request do
           }}
         }.not_to change(Translation, :count)
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(response.parsed_body).to include("source_language_code", "target_language_code")
       end
     end
@@ -81,7 +81,7 @@ RSpec.describe "Translations", type: :request do
           source_language_code: "en", target_language_code: "fr", source_text: "a" * 5001
         }}
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(response.parsed_body).to include("source_text")
       end
 
@@ -105,7 +105,7 @@ RSpec.describe "Translations", type: :request do
           }}
         }.not_to change(Translation, :count)
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(response.parsed_body["glossary"]).to include("must exist")
       end
     end
@@ -121,7 +121,7 @@ RSpec.describe "Translations", type: :request do
           glossary_id: glossary.id
         }}
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(response.parsed_body["glossary"])
           .to include("language codes do not match with the source and target language codes")
       end
@@ -244,14 +244,14 @@ RSpec.describe "Translations", type: :request do
     it "returns 422 listing the registered styles for an unknown one" do
       get "/translations/#{translation.id}", params: {markup: "neon"}
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body["errors"]).to match(/unknown markup.*highlight.*mark.*brackets/m)
     end
 
     it "returns 422, not 500, when markup arrives as an array" do
       get "/translations/#{translation.id}?markup[]=mark"
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body["errors"]).to match(/single name/)
     end
 

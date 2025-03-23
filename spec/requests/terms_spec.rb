@@ -27,7 +27,7 @@ RSpec.describe "Terms", type: :request do
       before { post "/glossaries/#{glossary.id}/terms", params: invalid_attributes }
 
       it "returns a 422 response" do
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
 
       it "returns a JSON response with errors" do

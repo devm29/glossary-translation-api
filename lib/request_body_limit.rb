@@ -28,7 +28,7 @@ class RequestBodyLimit
 
   def too_large
     body = {errors: "Request body too large (limit #{@limit} bytes)"}.to_json
-    [413, {"Content-Type" => "application/json", "Content-Length" => body.bytesize.to_s}, [body]]
+    [413, {"content-type" => "application/json", "content-length" => body.bytesize.to_s}, [body]]
   end
 
   class BodyTooLarge < StandardError; end

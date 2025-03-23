@@ -1,21 +1,21 @@
 # syntax=docker/dockerfile:1
 
 # ---------------------------------------------------------------- build stage
-# Compiles native extensions (pg, sqlite3, bootsnap) and resolves the bundle.
+# Compiles native extensions (pg, psych, bootsnap) and resolves the bundle.
 # None of this tooling reaches the runtime image.
-FROM ruby:3.1.3-slim AS builder
+FROM ruby:3.4.12-slim AS builder
 
 ENV BUNDLE_PATH=/usr/local/bundle \
     BUNDLE_DEPLOYMENT=1 \
     BUNDLE_WITHOUT=development:test
 
 RUN apt-get update -qq \
- && apt-get install --no-install-recommends -y build-essential libpq-dev \
+ && apt-get install --no-install-recommends -y build-essential libpq-dev libyaml-dev \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY Gemfile Gemfile.lock ./
+COPY Gemfile Gemfile.lock .ruby-version ./
 RUN bundle install \
  && rm -rf "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
 
@@ -25,7 +25,7 @@ COPY . .
 RUN bundle exec bootsnap precompile --gemfile app/ config/ lib/
 
 # -------------------------------------------------------------- runtime stage
-FROM ruby:3.1.3-slim AS runtime
+FROM ruby:3.4.12-slim AS runtime
 
 ENV BUNDLE_PATH=/usr/local/bundle \
     BUNDLE_DEPLOYMENT=1 \
@@ -36,7 +36,7 @@ ENV BUNDLE_PATH=/usr/local/bundle \
 
 # libpq5 is the Postgres client library; curl is used by the healthcheck.
 RUN apt-get update -qq \
- && apt-get install --no-install-recommends -y libpq5 curl tzdata \
+ && apt-get install --no-install-recommends -y libpq5 libyaml-0-2 curl tzdata \
  && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system --gid 1000 rails \

@@ -2,7 +2,7 @@ require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
   # Code is reloaded on every request.
-  config.cache_classes = false
+  config.enable_reloading = true
   config.eager_load = false
 
   # Show full error reports (rendered as JSON; see config.api_only).

@@ -15,7 +15,7 @@ class GlossariesController < ApplicationController
     if glossary.save
       render json: glossary, status: :created
     else
-      render json: glossary.errors, status: :unprocessable_entity
+      render json: glossary.errors, status: :unprocessable_content
     end
   end
 

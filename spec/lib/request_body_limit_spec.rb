@@ -4,7 +4,7 @@ RSpec.describe RequestBodyLimit do
   let(:downstream) do
     lambda do |env|
       body = env["rack.input"].read
-      [200, {"Content-Type" => "text/plain"}, [body.bytesize.to_s]]
+      [200, {"content-type" => "text/plain"}, [body.bytesize.to_s]]
     end
   end
 
@@ -38,7 +38,7 @@ RSpec.describe RequestBodyLimit do
     status, headers, body = middleware.call(env_for("a" * 17))
 
     expect(status).to eq(413)
-    expect(headers["Content-Type"]).to eq("application/json")
+    expect(headers["content-type"]).to eq("application/json")
     expect(JSON.parse(body.first)["errors"]).to eq("Request body too large (limit 16 bytes)")
   end
 

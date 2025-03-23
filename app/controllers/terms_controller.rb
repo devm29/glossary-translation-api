@@ -8,7 +8,7 @@ class TermsController < ApplicationController
     if term.save
       render json: term, status: :created
     else
-      render json: term.errors, status: :unprocessable_entity
+      render json: term.errors, status: :unprocessable_content
     end
   end
 

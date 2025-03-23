@@ -16,7 +16,7 @@ class HealthController < ApplicationController
     return @database_ok unless @database_ok.nil?
 
     @database_ok = begin
-      ActiveRecord::Base.connection.select_value("SELECT 1").to_i == 1
+      ActiveRecord::Base.with_connection { |connection| connection.select_value("SELECT 1").to_i == 1 }
     rescue
       false
     end

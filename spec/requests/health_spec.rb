@@ -16,7 +16,7 @@ RSpec.describe "Health", type: :request do
   end
 
   it "reports 503 when the database is unreachable" do
-    allow(ActiveRecord::Base).to receive(:connection).and_raise(ActiveRecord::ConnectionNotEstablished)
+    allow(ActiveRecord::Base).to receive(:with_connection).and_raise(ActiveRecord::ConnectionNotEstablished)
 
     get "/health"
 

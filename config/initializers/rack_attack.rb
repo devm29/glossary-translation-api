@@ -35,7 +35,7 @@ Rack::Attack.throttled_responder = lambda do |request|
 
   [
     429,
-    {"Content-Type" => "application/json", "Retry-After" => retry_after.to_s},
+    {"content-type" => "application/json", "retry-after" => retry_after.to_s},
     [{errors: "Rate limit exceeded. Retry in #{retry_after} seconds."}.to_json]
   ]
 end

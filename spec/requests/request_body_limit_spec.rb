@@ -22,7 +22,7 @@ RSpec.describe "Request body limit", type: :request do
 
     expect { post_json(oversized) }.not_to change(Translation, :count)
 
-    expect(response).to have_http_status(:payload_too_large)
+    expect(response).to have_http_status(:content_too_large)
     expect(response.parsed_body["errors"]).to match(/Request body too large/)
   end
 

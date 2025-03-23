@@ -25,7 +25,7 @@ RSpec.describe "Glossaries", type: :request do
       before { post "/glossaries", params: invalid_attributes }
 
       it "returns a 422 response" do
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
 
       it "returns a JSON response with errors" do
@@ -44,7 +44,7 @@ RSpec.describe "Glossaries", type: :request do
           post "/glossaries", params: {glossary: {source_language_code: "zz", target_language_code: "en"}}
         }.not_to change(Glossary, :count)
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(response.parsed_body).to include("source_language_code")
       end
     end
@@ -57,7 +57,7 @@ RSpec.describe "Glossaries", type: :request do
           post "/glossaries", params: {glossary: {source_language_code: "en", target_language_code: "fr"}}
         }.not_to change(Glossary, :count)
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(response.parsed_body["source_language_code"]).to include("has already been taken")
       end
 
@@ -105,7 +105,7 @@ RSpec.describe "Glossaries", type: :request do
         params: {glossary: {source_language_code: "en", target_language_code: "fr", case_sensitive: nil}}.to_json,
         headers: {"CONTENT_TYPE" => "application/json"}
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body["case_sensitive"]).to include("must be true or false")
     end
 

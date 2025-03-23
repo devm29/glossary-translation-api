@@ -5,7 +5,7 @@ class TranslationsController < ApplicationController
     if translation.save
       render json: translation, status: :created
     else
-      render json: translation.errors, status: :unprocessable_entity
+      render json: translation.errors, status: :unprocessable_content
     end
   end
 
