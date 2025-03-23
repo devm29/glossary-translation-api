@@ -80,6 +80,15 @@ RSpec.describe "Glossaries", type: :request do
       end
     end
 
+    context "when the body is not valid JSON" do
+      it "returns 400 in the shared error shape" do
+        post "/glossaries", params: '{"glossary": {', headers: {"CONTENT_TYPE" => "application/json"}
+
+        expect(response).to have_http_status(:bad_request)
+        expect(response.parsed_body).to eq("errors" => "Request body is not valid JSON")
+      end
+    end
+
     context "when the glossary key is missing entirely" do
       it "returns 400 Bad Request" do
         post "/glossaries", params: {source_language_code: "en"}

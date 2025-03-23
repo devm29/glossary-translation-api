@@ -4,6 +4,7 @@ class ApplicationController < ActionController::API
   # `require` without defensive branching.
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
   rescue_from ActionController::ParameterMissing, with: :render_parameter_missing
+  rescue_from ActionDispatch::Http::Parameters::ParseError, with: :render_malformed_body
   rescue_from Highlighting::Markup::Unknown, with: :render_unprocessable
   # Two concurrent creates of the same language pair both pass the uniqueness
   # validation; the unique index stops the second, and it should read as a
@@ -21,6 +22,10 @@ class ApplicationController < ActionController::API
 
   def render_parameter_missing(exception)
     render json: {errors: "Required parameter missing: #{exception.param}"}, status: :bad_request
+  end
+
+  def render_malformed_body(_exception)
+    render json: {errors: "Request body is not valid JSON"}, status: :bad_request
   end
 
   def render_conflict(_exception)
