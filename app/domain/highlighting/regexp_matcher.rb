@@ -1,15 +1,12 @@
 module Highlighting
-  # Reference strategy: the alternation-of-literals approach this endpoint used
-  # before the automaton existed. It is retained deliberately, for two reasons:
+  # The alternation-of-literals approach this endpoint started with. Onigmo
+  # scans the union in C, which is why AdaptiveMatcher picks it for every
+  # glossary below HIGHLIGHT_AUTOMATON_THRESHOLD.
   #
-  # * `spec/domain/highlighting/strategy_parity_spec.rb` asserts that both
-  #   strategies produce identical output, so the faster one cannot drift.
-  # * `rake benchmark:highlighting` measures one against the other, which is
-  #   where the numbers quoted in the README come from.
-  #
-  # It is not the default: a `Regexp.union` of N terms is recompiled on every
-  # call and is scanned with backtracking, so its cost grows with the size of
-  # the glossary.
+  # Its cost grows with the number of alternatives, so a large glossary goes to
+  # the automaton instead. The "strategy parity on random input" block in
+  # spec/domain/highlighting/matcher_spec.rb keeps the two in agreement, and
+  # `rake benchmark:highlighting` measures one against the other.
   class RegexpMatcher < Matcher
     private
 

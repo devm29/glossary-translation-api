@@ -20,9 +20,9 @@ class Translation < ApplicationRecord
 
   private
 
-  # `belongs_to ..., optional: true` silently accepts a glossary_id that points
-  # at no row, and there is no foreign key on translations.glossary_id, so a
-  # dangling reference would otherwise be persisted and returned as valid.
+  # `belongs_to ..., optional: true` accepts a glossary_id that points at no
+  # row. The foreign key would reject it too, but only as a 500 from the
+  # database; this turns it into a 422 with a field error.
   def glossary_must_exist
     return if glossary_id.blank? || glossary.present?
 
