@@ -8,6 +8,9 @@ module Paginated
 
   DEFAULT_PER_PAGE = 25
   MAX_PER_PAGE = 100
+  # Past this the OFFSET no longer fits in a database integer; every page
+  # beyond the data is empty anyway.
+  MAX_PAGE = 1_000_000
 
   private
 
@@ -26,14 +29,18 @@ module Paginated
   end
 
   def current_page
-    @current_page ||= [params[:page].to_i, 1].max
+    @current_page ||= positive_integer_param(:page)&.clamp(1, MAX_PAGE) || 1
   end
 
   def per_page
-    @per_page ||= begin
-      requested = params[:per_page].to_i
-      requested = DEFAULT_PER_PAGE if requested < 1
-      [requested, MAX_PER_PAGE].min
-    end
+    @per_page ||= positive_integer_param(:per_page)&.clamp(1, MAX_PER_PAGE) || DEFAULT_PER_PAGE
+  end
+
+  # A query string can carry an array or a hash (`?page[]=2`), which has no
+  # `to_i`; anything other than a positive integer string counts as absent.
+  def positive_integer_param(name)
+    value = params[name]
+    number = value.is_a?(String) ? value.to_i : 0
+    number if number.positive?
   end
 end

@@ -99,4 +99,24 @@ RSpec.describe "Pagination", type: :request do
     expect(response.headers["X-Total-Count"]).to eq("0")
     expect(response.headers["X-Total-Pages"]).to eq("1")
   end
+
+  it "clamps a page number too large for the database to the last page it allows" do
+    create_glossaries(3)
+
+    get "/glossaries", params: {page: "99999999999999999999"}
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body).to eq([])
+    expect(response.headers["X-Page"]).to eq(Paginated::MAX_PAGE.to_s)
+  end
+
+  it "ignores page and per_page given as an array or a hash" do
+    create_glossaries(3)
+
+    get "/glossaries?page[]=2&per_page[size]=1"
+
+    expect(response).to have_http_status(:ok)
+    expect(response.headers["X-Page"]).to eq("1")
+    expect(response.headers["X-Per-Page"]).to eq(Paginated::DEFAULT_PER_PAGE.to_s)
+  end
 end
