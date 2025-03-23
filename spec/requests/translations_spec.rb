@@ -248,6 +248,13 @@ RSpec.describe "Translations", type: :request do
       expect(response.parsed_body["errors"]).to match(/unknown markup.*highlight.*mark.*brackets/m)
     end
 
+    it "returns 422, not 500, when markup arrives as an array" do
+      get "/translations/#{translation.id}?markup[]=mark"
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body["errors"]).to match(/single name/)
+    end
+
     it "does not alter the stored text whichever style is used" do
       get "/translations/#{translation.id}", params: {markup: "mark"}
 

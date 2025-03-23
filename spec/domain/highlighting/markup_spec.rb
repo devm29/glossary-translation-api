@@ -14,6 +14,13 @@ RSpec.describe Highlighting::Markup do
       expect(described_class.fetch("mark").open).to eq("<mark>")
     end
 
+    it "raises Unknown rather than NoMethodError for an array or a hash" do
+      expect { described_class.fetch(["mark"]) }
+        .to raise_error(Highlighting::Markup::Unknown, /single name.*highlight/m)
+      expect { described_class.fetch({"a" => "mark"}) }
+        .to raise_error(Highlighting::Markup::Unknown, /single name/)
+    end
+
     it "raises for an unregistered style" do
       expect { described_class.fetch(:neon) }
         .to raise_error(Highlighting::Markup::Unknown, /neon.*highlight/m)

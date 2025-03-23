@@ -42,9 +42,15 @@ module Highlighting
         @styles[name.to_sym] = Style.new(name.to_sym, open.to_s.freeze, close.to_s.freeze).freeze
       end
 
+      # `name` usually comes straight from the query string, so it may also be
+      # an array or a hash (`?markup[]=mark`); those are unknown, not a crash.
       def fetch(name)
-        key = (name.presence || DEFAULT).to_sym
-        @styles.fetch(key) { raise Unknown, "unknown markup #{name.inspect} (known: #{names.join(", ")})" }
+        return @styles.fetch(DEFAULT) if name.blank?
+
+        known = "(known: #{names.join(", ")})"
+        raise Unknown, "markup must be a single name #{known}" unless name.is_a?(String) || name.is_a?(Symbol)
+
+        @styles.fetch(name.to_sym) { raise Unknown, "unknown markup #{name.inspect} #{known}" }
       end
 
       def registered?(name)
