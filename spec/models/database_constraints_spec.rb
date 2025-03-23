@@ -72,4 +72,21 @@ RSpec.describe "Database constraints" do
       }.to raise_error(ActiveRecord::InvalidForeignKey)
     end
   end
+
+  describe "the unique index on a glossary's source terms" do
+    it "rejects a duplicate source term inserted behind the validations" do
+      glossary = create(:glossary)
+      create(:term, glossary: glossary, source_term: "cat")
+
+      expect {
+        Term.insert_all!([{
+          source_term: "cat",
+          target_term: "matou",
+          glossary_id: glossary.id,
+          created_at: Time.current,
+          updated_at: Time.current
+        }])
+      }.to raise_error(ActiveRecord::RecordNotUnique)
+    end
+  end
 end
