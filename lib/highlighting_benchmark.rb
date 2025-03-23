@@ -1,5 +1,3 @@
-require "benchmark"
-
 # Measures glossary highlighting against the two axes that actually grow in
 # production: the number of terms in a glossary and the length of the source
 # text. Runs entirely on domain objects, so it needs no database.
@@ -137,7 +135,9 @@ class HighlightingBenchmark
     elapsed = 0.0
 
     while elapsed < BUDGET_SECONDS
-      elapsed += Benchmark.realtime { yield }
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      yield
+      elapsed += Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
       iterations += 1
     end
 
