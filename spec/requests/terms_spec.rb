@@ -60,6 +60,19 @@ RSpec.describe "Terms", type: :request do
       end
     end
 
+    context "when the glossary already has that source term" do
+      it "returns 422 instead of storing a second, conflicting entry" do
+        create(:term, source_term: "cat", target_term: "chat", glossary: glossary)
+
+        expect {
+          post "/glossaries/#{glossary.id}/terms", params: {term: {source_term: " cat ", target_term: "matou"}}
+        }.not_to change(Term, :count)
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.parsed_body["source_term"]).to include("has already been taken")
+      end
+    end
+
     context "when the term key is a string" do
       it "returns 400 Bad Request" do
         post "/glossaries/#{glossary.id}/terms", params: {term: "cat"}

@@ -15,6 +15,8 @@ class Term < ApplicationRecord
   # cache version, so this is what invalidates a compiled matcher.
   belongs_to :glossary, touch: true
 
-  validates :source_term, presence: true
+  normalizes :source_term, :target_term, with: ->(value) { value.strip }
+
+  validates :source_term, presence: true, uniqueness: {scope: :glossary_id}
   validates :target_term, presence: true
 end
