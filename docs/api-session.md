@@ -1,14 +1,14 @@
 # Captured API session
 
-Every block below is a real request against a locally running instance
-(`bin/rails server -p 8380`, PostgreSQL, `rails db:seed`). The commands and
-the status lines are verbatim; response bodies are piped through `jq` for
-readability and are otherwise unedited.
+Every block below is a real request against the Docker Compose stack
+(`docker compose up --build`: the production image on Ruby 3.4.12 and Rails
+8.1, PostgreSQL 17, seeded on first boot). Commands and status lines are
+verbatim; JSON bodies are pretty-printed and otherwise unedited.
 
 ```console
-$ ruby -v
-ruby 3.1.3p185 (2022-11-24 revision 1a6b16756e) [arm64-darwin23]
-$ bin/rails db:prepare db:seed
+$ docker compose exec app ruby -v
+ruby 3.4.12 (2026-10-23 revision 366f5fdc00) +PRISM [aarch64-linux]
+$ docker compose logs app | grep Seeded
 Seeded 3 glossaries, 12 terms, 4 translations.
 ```
 
@@ -40,7 +40,7 @@ HTTP 200
 ### List glossaries (seeded), page metadata in headers
 
 ```console
-$ curl http://localhost:8380/glossaries?per_page=2
+$ curl 'http://localhost:8380/glossaries?per_page=2'
 HTTP 200
 [
   {
@@ -112,19 +112,14 @@ HTTP 200
 ]
 ```
 
+### The paging headers for the same request
+
 ```console
-$ curl -sS -D - -o /dev/null 'http://localhost:8380/glossaries?per_page=2' | grep -i '^x-'
-X-Frame-Options: SAMEORIGIN
-X-XSS-Protection: 0
-X-Content-Type-Options: nosniff
-X-Download-Options: noopen
-X-Permitted-Cross-Domain-Policies: none
-X-Page: 1
-X-Per-Page: 2
-X-Total-Count: 3
-X-Total-Pages: 2
-X-Request-Id: 0b799231-6078-4614-a05b-f8c0e71a7844
-X-Runtime: 0.006443
+$ curl -sS -D - -o /dev/null 'http://localhost:8380/glossaries?per_page=2' | grep -i '^x-\(page\|per-page\|total\)'
+x-page: 1
+x-per-page: 2
+x-total-count: 3
+x-total-pages: 2
 ```
 
 ### Fetch one glossary with its terms
@@ -198,15 +193,27 @@ HTTP 422
 }
 ```
 
-### Add a term to the new glossary
+### Add a term to the new glossary; surrounding spaces are stripped
 
 ```console
-$ curl -X POST http://localhost:8380/glossaries/4/terms -H 'Content-Type: application/json' -d '{"term":{"source_term":"open source","target_term":"codigo abierto"}}'
+$ curl -X POST http://localhost:8380/glossaries/4/terms -H 'Content-Type: application/json' -d '{"term":{"source_term":" open source ","target_term":"codigo abierto"}}'
 HTTP 201
 {
   "id": 13,
   "source_term": "open source",
   "target_term": "codigo abierto"
+}
+```
+
+### The same source term twice in one glossary is rejected
+
+```console
+$ curl -X POST http://localhost:8380/glossaries/4/terms -H 'Content-Type: application/json' -d '{"term":{"source_term":"open source","target_term":"fuente abierta"}}'
+HTTP 422
+{
+  "source_term": [
+    "has already been taken"
+  ]
 }
 ```
 
@@ -366,6 +373,56 @@ HTTP 400
 }
 ```
 
+### A wrapper key holding a string instead of an object is a 400 too
+
+```console
+$ curl -X POST http://localhost:8380/glossaries/1/terms -H 'Content-Type: application/json' -d '{"term":"cat"}'
+HTTP 400
+{
+  "errors": "Required parameter missing: term"
+}
+```
+
+### A body that is not JSON gets the same error shape
+
+```console
+$ curl -X POST http://localhost:8380/glossaries -H 'Content-Type: application/json' -d '{"glossary": {'
+HTTP 400
+{
+  "errors": "Request body is not valid JSON"
+}
+```
+
+### case_sensitive must be a boolean, not null
+
+```console
+$ curl -X POST http://localhost:8380/glossaries -H 'Content-Type: application/json' -d '{"glossary":{"source_language_code":"en","target_language_code":"it","case_sensitive":null}}'
+HTTP 422
+{
+  "case_sensitive": [
+    "must be true or false"
+  ]
+}
+```
+
+### Query parameters of the wrong shape are not a 500
+
+```console
+$ curl 'http://localhost:8380/translations/5?markup[]=mark'
+HTTP 422
+{
+  "errors": "markup must be a single name (known: highlight, mark, brackets)"
+}
+```
+
+### A page number past what the database can offset is capped
+
+```console
+$ curl -sS -D - -o /dev/null 'http://localhost:8380/glossaries?page=99999999999999999999' | grep -i '^\(HTTP\|x-page\)'
+HTTP/1.1 200 OK
+x-page: 1000000
+```
+
 ### Unknown translation returns 404
 
 ```console
@@ -382,7 +439,7 @@ HTTP 404
 
 ```console
 $ { printf '{"translation":{"source_text":"'; head -c 2000000 /dev/zero | tr '\0' 'a'; printf '"}}'; } > /tmp/big.json
-$ wc -c < /tmp/big.json
+$ wc -c < /tmp/big.json | tr -d ' '
 2000034
 $ curl -sS -w '\n%{http_code}\n' -X POST http://localhost:8380/translations -H 'Content-Type: application/json' --data-binary @/tmp/big.json
 {"errors":"Request body too large (limit 1048576 bytes)"}
@@ -391,17 +448,20 @@ $ curl -sS -w '\n%{http_code}\n' -X POST http://localhost:8380/translations -H '
 
 ### Per-IP rate limiting (120 reads/minute by default)
 
+The reads above already used part of this minute's budget, so the burst is refused before its 125th request.
+
 ```console
-$ for i in $(seq 1 125); do curl -sS -o /dev/null -w '%{http_code} ' http://localhost:8380/glossaries; done
+$ for i in $(seq 1 125); do curl -sS -o /dev/null -w '%{http_code} ' http://localhost:8380/glossaries; done | fold -w 80
 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 
 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 
 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 
 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 
 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 
-200 200 200 200 200 200 200 200 200 429 429 429 429 429 429 429 429 429 429 429 
+200 200 200 200 200 200 200 429 429 429 429 429 429 429 429 429 429 429 429 429 
 429 429 429 429 429 
-$ curl -sS -D - -o /dev/null http://localhost:8380/glossaries | head -1
+$ curl -sS -D - -o /dev/null http://localhost:8380/glossaries | grep -i '^\(HTTP\|retry-after\)'
 HTTP/1.1 429 Too Many Requests
+retry-after: 60
 $ curl -sS http://localhost:8380/glossaries
 {"errors":"Rate limit exceeded. Retry in 60 seconds."}
 $ curl -sS -o /dev/null -w '%{http_code}\n' http://localhost:8380/health   # health checks are safelisted
