@@ -15,6 +15,6 @@ class TermsController < ApplicationController
   private
 
   def term_params
-    params.require(:term).permit(:source_term, :target_term)
+    params.expect(term: %i[source_term target_term])
   end
 end

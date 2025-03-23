@@ -60,6 +60,14 @@ RSpec.describe "Terms", type: :request do
       end
     end
 
+    context "when the term key is a string" do
+      it "returns 400 Bad Request" do
+        post "/glossaries/#{glossary.id}/terms", params: {term: "cat"}
+
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
+
     context "when the glossary already has terms" do
       it "appends rather than replacing" do
         create(:term, source_term: "cat", target_term: "chat", glossary: glossary)

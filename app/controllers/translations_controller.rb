@@ -31,6 +31,6 @@ class TranslationsController < ApplicationController
   end
 
   def translation_params
-    params.require(:translation).permit(:source_language_code, :target_language_code, :source_text, :glossary_id)
+    params.expect(translation: %i[source_language_code target_language_code source_text glossary_id])
   end
 end

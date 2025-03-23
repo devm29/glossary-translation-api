@@ -89,6 +89,15 @@ RSpec.describe "Glossaries", type: :request do
       end
     end
 
+    context "when the glossary key holds a string instead of an object" do
+      it "returns 400 rather than calling #permit on a String" do
+        post "/glossaries", params: {glossary: "en-fr"}.to_json, headers: {"CONTENT_TYPE" => "application/json"}
+
+        expect(response).to have_http_status(:bad_request)
+        expect(response.parsed_body["errors"]).to start_with("Required parameter missing")
+      end
+    end
+
     context "when the glossary key is missing entirely" do
       it "returns 400 Bad Request" do
         post "/glossaries", params: {source_language_code: "en"}

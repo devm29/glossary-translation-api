@@ -22,6 +22,6 @@ class GlossariesController < ApplicationController
   private
 
   def glossary_params
-    params.require(:glossary).permit(:source_language_code, :target_language_code, :case_sensitive)
+    params.expect(glossary: %i[source_language_code target_language_code case_sensitive])
   end
 end

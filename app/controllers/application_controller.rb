@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::API
   # Error handling lives here so every endpoint returns the same JSON shape for
   # the same class of failure, and so controller actions can use `find` and
-  # `require` without defensive branching.
+  # `params.expect` without defensive branching.
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
   rescue_from ActionController::ParameterMissing, with: :render_parameter_missing
   rescue_from ActionDispatch::Http::Parameters::ParseError, with: :render_malformed_body
