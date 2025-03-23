@@ -5,6 +5,10 @@ class ApplicationController < ActionController::API
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
   rescue_from ActionController::ParameterMissing, with: :render_parameter_missing
   rescue_from Highlighting::Markup::Unknown, with: :render_unprocessable
+  # Two concurrent creates of the same language pair both pass the uniqueness
+  # validation; the unique index stops the second, and it should read as a
+  # conflict rather than a 500.
+  rescue_from ActiveRecord::RecordNotUnique, with: :render_conflict
 
   private
 
@@ -17,6 +21,10 @@ class ApplicationController < ActionController::API
 
   def render_parameter_missing(exception)
     render json: {errors: "Required parameter missing: #{exception.param}"}, status: :bad_request
+  end
+
+  def render_conflict(_exception)
+    render json: {errors: "A record with the same unique attributes already exists"}, status: :conflict
   end
 
   def render_unprocessable(exception)

@@ -61,6 +61,16 @@ RSpec.describe "Glossaries", type: :request do
         expect(response.parsed_body["source_language_code"]).to include("has already been taken")
       end
 
+      it "answers 409 when a concurrent create slips past the validation" do
+        allow_any_instance_of(ActiveRecord::Validations::UniquenessValidator).to receive(:validate_each)
+
+        post "/glossaries", params: {glossary: {source_language_code: "en", target_language_code: "fr"}}
+
+        expect(response).to have_http_status(:conflict)
+        expect(response.parsed_body["errors"]).to match(/already exists/)
+        expect(Glossary.count).to eq(1)
+      end
+
       it "allows the same source language with a different target language" do
         expect {
           post "/glossaries", params: {glossary: {source_language_code: "en", target_language_code: "de"}}
@@ -81,6 +91,15 @@ RSpec.describe "Glossaries", type: :request do
   end
 
   describe "POST #create case sensitivity" do
+    it "returns 422 when case_sensitive is explicitly null" do
+      post "/glossaries",
+        params: {glossary: {source_language_code: "en", target_language_code: "fr", case_sensitive: nil}}.to_json,
+        headers: {"CONTENT_TYPE" => "application/json"}
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body["case_sensitive"]).to include("must be true or false")
+    end
+
     it "defaults to case sensitive" do
       post "/glossaries", params: {glossary: {source_language_code: "en", target_language_code: "fr"}}
 

@@ -27,6 +27,9 @@ class Glossary < ApplicationRecord
   validates :source_language_code, presence: true, inclusion: {in: ISO_639_1_CODES}
   validates :target_language_code, presence: true, inclusion: {in: ISO_639_1_CODES}
   validates :source_language_code, uniqueness: {scope: :target_language_code}
+  # The column is NOT NULL; without this a `"case_sensitive": null` in the
+  # request body reached the database and came back as a 500.
+  validates :case_sensitive, inclusion: {in: [true, false], message: "must be true or false"}
 
   scope :with_terms, -> { includes(:terms) }
   scope :ordered, -> { order(:id) }

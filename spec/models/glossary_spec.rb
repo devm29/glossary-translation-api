@@ -18,6 +18,13 @@ RSpec.describe Glossary, type: :model do
     it { should validate_inclusion_of(:source_language_code).in_array(Glossary::ISO_639_1_CODES) }
     it { should validate_inclusion_of(:target_language_code).in_array(Glossary::ISO_639_1_CODES) }
 
+    it "rejects a nil case_sensitive instead of leaving it to the NOT NULL column" do
+      glossary = Glossary.new(valid_attributes.merge(case_sensitive: nil))
+
+      expect(glossary).not_to be_valid
+      expect(glossary.errors[:case_sensitive]).to include("must be true or false")
+    end
+
     it "validates the uniqueness of the source and target language codes" do
       Glossary.create!(valid_attributes)
       duplicate_glossary = Glossary.new(valid_attributes)
