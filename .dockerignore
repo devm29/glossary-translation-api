@@ -6,8 +6,8 @@
 .bundle
 vendor/bundle
 
-# Test artifacts and scratch space.
-spec
+# Test artifacts and scratch space. spec/ is kept for the test stage; the
+# build stage deletes it before anything reaches the runtime image.
 docs
 coverage
 db/*.sqlite3

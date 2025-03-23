@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+# Container healthcheck: exits 0 only when /health answers 200. Plain Ruby, so
+# the runtime image needs no curl.
+require "net/http"
+
+begin
+  uri = URI("http://127.0.0.1:#{ENV.fetch("PORT", "3000")}/health")
+  response = Net::HTTP.start(uri.host, uri.port, open_timeout: 2, read_timeout: 3) { |http| http.get(uri.path) }
+  exit(response.is_a?(Net::HTTPOK))
+rescue StandardError
+  # Refused, timed out or reset: all of them mean "not healthy yet".
+  exit(false)
+end
